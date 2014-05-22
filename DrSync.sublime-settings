@@ -1,0 +1,28 @@
+{
+	// Debugging purpose:
+	"debug_mode" : false,
+
+	// Synchronization settings
+	"synchronization_settings": {
+		// Synchronize installed packages (located in "Installed Packages" directory)
+		"installed_packages": false,
+		// Synchronize local packages (located in "Packages" directory)
+		"local_packages": false,
+		// Synchronize user directory (located in "Packages/User" directory)
+		"user_directory": false,
+		// Synchronize Package Control preferences
+		"package_control_preferences": true,
+		// Synchronize DrSync preferences
+		"drsync_preferences": true,
+		// Synchronize user preferences
+		// - Preferences.sublime-settings
+		// - Default (Windows).sublime-keymap
+		// - Default (OSX).sublime-keymap
+		// - Default (Linux).sublime-keymap
+		"sublime_preferences": true
+	},
+	// RegEx patterns of folder exclusion
+	"exclude_folder_patterns": [],
+	// RegEx patterns of file exclusion
+	"exclude_file_patterns": ["\\.DS_Store"]
+}

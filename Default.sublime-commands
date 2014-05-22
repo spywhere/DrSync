@@ -1,0 +1,20 @@
+[
+    {
+        "caption": "DrSync: Synchronize Settings",
+        "command": "drsync"
+    },
+    {
+        "caption": "Preferences: DrSync Settings – Default",
+        "command": "open_file", "args":
+        {
+            "file": "${packages}/DrSync/DrSync.sublime-settings"
+        }
+    },
+    {
+        "caption": "Preferences: DrSync Settings – User",
+        "command": "open_file", "args":
+        {
+            "file": "${packages}/User/DrSync.sublime-settings"
+        }
+    }
+]
