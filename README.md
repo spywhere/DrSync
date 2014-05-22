@@ -2,9 +2,12 @@
 
 ![DrSync Logo](https://raw.githubusercontent.com/spywhere/spywhere.github.com/master/images/drsync/DrSyncMini.png)
 
+Dropbox Status: Under review<br />
+GoogleDrive Status: Working
+
 ### Status: DrSync is under review and will not working at this moment.
 
-A Sublime Text 3 Plugin for settings synchronization on Dropbox
+A Sublime Text 3 Plugin for settings synchronization on Dropbox and GoogleDrive
 
 ### How to use
 Open Command Palette then type `Synchronize Settings` and DrSync will do the rest for you. :)

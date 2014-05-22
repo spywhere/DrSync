@@ -3,19 +3,23 @@ import sublime_plugin
 import datetime
 import os
 import re
-import threading
-from tempfile import gettempdir
 from .dropbox import *
+from .gdrive import *
+from .dropbox_thread import *
+from .gdrive_thread import *
+from .drsync_key import *
 from .thread_progress import *
 
 
 USER_FOLDER = "User"
-SYNC_SCHEMA = "/DrSync.drsync-data"
 DRSYNC_SETTINGS = None
 
 
 def get_settings(key, default=None):
 	return DRSYNC_SETTINGS.get(key, default)
+
+def cloud_is(cloud):
+	return get_settings("cloud_service") == cloud
 
 def plugin_loaded():
 	global DRSYNC_SETTINGS
@@ -24,9 +28,6 @@ def plugin_loaded():
 
 
 class DrsyncCommand(sublime_plugin.WindowCommand):
-	APP_KEY = "<AppKey>"
-	APP_SECRET = "<AppSecret>"
-
 	def connect_fx(self, i, message, thread):
 		msg = message
 		if hasattr(thread, "message"):
@@ -43,16 +44,34 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 			loadbar.append(" ")
 		if not self.upload:
 			loadbar.reverse()
-		return {"i": (i+1) % maxsize, "message": "Syncing... [{0}] {1}%".format("".join(loadbar), thread.percentage), "delay": 100}
+		filename = ""
+		if hasattr(thread, "filename"):
+			filename = " "+thread.filename
+		return {"i": (i+1) % maxsize, "message": "Syncing... [{0}] {1}%{2}{3}".format("".join(loadbar), thread.percentage, filename, "."*(1+(i%3))), "delay": 300}
 
 	def run(self):
-		self.auth = DropboxAuth(self.APP_KEY, self.APP_SECRET)
+		credential = DrSyncCredential.get_credential(self, get_settings("cloud_service"))
+		if cloud_is("drive"):
+			self.auth = GDriveAuth(credential)
+		elif cloud_is("dropbox"):
+			self.auth = DropboxAuth(credential["app_key"], credential["app_secret"])
+		else:
+			sublime.error_message("Invalid Clound Service: " + get_settings("cloud_service"))
+			return
 		self.window.show_input_panel("Authorize Code:", "Please allow DrSync and get code from: "+self.auth.get_authorize_url(), self.on_code_entered, None, None)
 
 	def on_code_entered(self, code):
-		thread = AuthenticationThread(self.auth, code)
+		if cloud_is("drive"):
+			thread = GDriveAuthenticationThread(DrSyncCredential.get_credential(self, "drive"), self.auth, code)
+		elif cloud_is("dropbox"):
+			thread = DropboxAuthenticationThread(self.auth, code)
+		else:
+			return
 		thread.start()
-		ThreadProgress(thread, "Connecting to Dropbox", self.on_authorized, self.on_authorized, self.connect_fx)
+		if cloud_is("drive"):
+			ThreadProgress(thread, "Connecting to GoogleDrive", self.on_authorized, self.on_authorized, self.connect_fx)
+		elif cloud_is("dropbox"):
+			ThreadProgress(thread, "Connecting to Dropbox", self.on_authorized, self.on_authorized, self.connect_fx)
 
 	def get_timestamp(self):
 		months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -74,7 +93,11 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 			if thread.sync_data is None:
 				self.sync_to()
 			else:
-				self.window.show_quick_panel([["Sync from Dropbox", "Overwrite current data [" + thread.sync_data["last_sync"] + "]"], ["Sync to Dropbox", "Overwrite previously sync data [" + self.get_timestamp() + "]"]], self.on_sync_selection)
+				if cloud_is("drive"):
+					items = [["Sync from GoogleDrive", "Overwrite current data [" + thread.sync_data["last_sync"] + "]"], ["Sync to GoogleDrive", "Overwrite previously sync data [" + self.get_timestamp() + "]"]]
+				elif cloud_is("dropbox"):
+					items = [["Sync from Dropbox", "Overwrite current data [" + thread.sync_data["last_sync"] + "]"], ["Sync to Dropbox", "Overwrite previously sync data [" + self.get_timestamp() + "]"]]
+				self.window.show_quick_panel(items, self.on_sync_selection)
 		else:
 			sublime.error_message(thread.result_message)
 
@@ -114,14 +137,20 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 		return name != USER_FOLDER
 
 	def sync_from(self):
-		thread = SyncGatherThread(self.paths, self.sync_data, self.client)
+		if cloud_is("drive"):
+			thread = GDriveSyncGatherThread(self.paths, self.sync_data, self.client)
+		elif cloud_is("dropbox"):
+			thread = DropboxSyncGatherThread(self.paths, self.sync_data, self.client)
 		thread.start()
 		self.upload = False
 		ThreadProgress(thread, "DrSync is verifying data", self.on_verified, self.on_verified, self.connect_fx)
 
 	def on_verified(self, thread):
 		if thread.result:
-			sthread = SyncDownThread(self.sync_data, thread.file_list, self.client)
+			if cloud_is("drive"):
+				sthread = GDriveSyncDownThread(self.sync_data, thread.file_list, self.client)
+			elif cloud_is("dropbox"):
+				sthread = DropboxSyncDownThread(self.sync_data, thread.file_list, self.client)
 			sthread.start()
 			self.upload = False
 			ThreadProgress(sthread, "", self.on_sync_done, self.on_sync_done, self.sync_fx)
@@ -155,7 +184,10 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 		data["settings"] = settings
 		data["last_sync"] = self.get_timestamp()
 
-		thread = SyncUpThread(data, file_list, self.client)
+		if cloud_is("drive"):
+			thread = GDriveSyncUpThread(data, file_list, self.client)
+		elif cloud_is("dropbox"):
+			thread = DropboxSyncUpThread(data, file_list, self.client)
 		thread.start()
 		self.upload = True
 		ThreadProgress(thread, "", self.on_sync_done, self.on_sync_done, self.sync_fx)
@@ -165,153 +197,3 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 			sublime.status_message("Data has been synchronized successfully")
 		else:
 			sublime.error_message(thread.result_message)
-
-class AuthenticationThread(threading.Thread):
-	def __init__(self, authenticator, authorize_code):
-		self.authenticator = authenticator
-		self.authorize_code = authorize_code
-		threading.Thread.__init__(self)
-
-	def run(self):
-		try:
-			self.access_token, user_id = self.authenticator.authorize(self.authorize_code)
-			self.client = DropboxClient(self.access_token)
-			self.message = "Connected. Gathering account informations"
-			self.account = self.client.account_info()
-			self.message = "Hello, %s! DrSync is checking previously synchronized data" % (self.account["display_name"])
-			self.folder_data = self.client.metadata("/")
-			self.sync_data = None
-			for item in self.folder_data["contents"]:
-				if not item["is_dir"] and item["path"] == SYNC_SCHEMA:
-					fp = self.client.get_file(SYNC_SCHEMA)
-					self.sync_data = sublime.decode_value(fp.read().decode("utf-8"))
-			self.result = True
-		except ErrorResponse as e:
-			self.result_message = "ErrorRes: %s" % (e)
-			self.result = False
-		except Exception as e:
-			self.result_message = "Error: %s" % (e)
-			self.result = False
-
-
-class SyncUpThread(threading.Thread):
-	def __init__(self, data, file_list, client):
-		self.data = data
-		self.file_list = file_list
-		self.client = client
-		self.percentage = 0
-		threading.Thread.__init__(self)
-
-	def run(self):
-		try:
-			index = 0
-			for parent, filepath in self.file_list:
-				self.percentage = int(index*100/(len(self.file_list)+1))
-				path = os.path.join(os.path.basename(parent), os.path.relpath(filepath, parent))
-				f = open(filepath, "rb")
-				response = self.client.put_file(DropboxUtil.format_path(path), f, True)
-				index += 1
-
-			tmppath = os.path.join(gettempdir(), "DrSync.drsync-tmp")
-			out = open(tmppath, "wb")
-			out.write(sublime.encode_value(self.data).encode("utf-8"))
-			out.close()
-			f = open(tmppath, "rb")
-			response = self.client.put_file(SYNC_SCHEMA, f, True)
-
-			self.result = True
-		except Exception as e:
-			print("Error: %s" % (e))
-			self.result = False
-
-class SyncGatherThread(threading.Thread):
-	def __init__(self, paths, data, client):
-		self.paths = paths
-		self.data = data
-		self.client = client
-		threading.Thread.__init__(self)
-
-	def is_exists(self, file_path):
-		try:
-			filedata = self.client.metadata(file_path)
-			return "is_deleted" not in filedata or not filedata["is_deleted"]
-		except Exception as e:
-			return False
-		return False
-
-	def get_all(self, dir_path):
-		file_list = []
-		try:
-			folderdata = self.client.metadata(dir_path)
-			for item in folderdata["contents"]:
-				if item["is_dir"]:
-					file_list += self.get_all(item["path"])
-				else:
-					file_list.append(item["path"])
-		except Exception as e:
-			pass
-		return file_list
-
-	def run(self):
-		try:
-			self.file_list = []
-			settings = self.data["settings"]
-			if settings["installed_packages"]:
-				files = self.get_all(DropboxUtil.format_path(os.path.basename(self.paths["installed_packages"])))
-				for filepath in files:
-					self.file_list.append([self.paths["installed_packages"], filepath])
-			if settings["local_packages"]:
-				files = self.get_all(DropboxUtil.format_path(os.path.basename(self.paths["packages"])))
-				for filepath in files:
-					self.file_list.append([self.paths["packages"], filepath])
-			if settings["user_directory"]:
-				files = self.get_all(DropboxUtil.format_path(os.path.basename(self.paths["packages_user"])))
-				for filepath in files:
-					self.file_list.append([self.paths["packages_user"], filepath])
-			else:
-				files = []
-				if settings["package_control_preferences"]:
-					files += ["Package Control.sublime-settings"]
-				if settings["drsync_preferences"]:
-					files += ["DrSync.sublime-settings"]
-				if settings["sublime_preferences"]:
-					files += ["Preferences.sublime-settings", "Default (Windows).sublime-keymap", "Default (OSX).sublime-keymap", "Default (Linux).sublime-keymap"]
-				for filename in files:
-					filepath = os.path.join(os.path.basename(self.paths["packages_user"]), filename)
-					if self.is_exists(DropboxUtil.format_path(filepath)):
-						self.file_list.append([self.paths["packages_user"], DropboxUtil.format_path(filepath)])
-			self.result = True
-		except Exception as e:
-			self.result_message = "Error: %s" % (e)
-			self.result = False
-
-
-class SyncDownThread(threading.Thread):
-	def __init__(self, data, file_list, client):
-		self.data = data
-		self.file_list = file_list
-		self.client = client
-		self.percentage = 0
-		threading.Thread.__init__(self)
-
-	def run(self):
-		currentfile = ""
-		try:
-			index = 0
-			for target, filepath in self.file_list:
-				currentfile = filepath
-				self.percentage = int(index*100/len(self.file_list))
-				targetname = DropboxUtil.format_path(os.path.basename(target))
-				targetpath = os.path.join(target, filepath[len(targetname)+1:])
-				targetdir = os.path.dirname(targetpath)
-				f = self.client.get_file(filepath)
-				if not os.path.exists(targetdir):
-					os.makedirs(targetdir)
-				out = open(targetpath, "wb")
-				out.write(f.read())
-				out.close()
-				index += 1
-			self.result = True
-		except Exception as e:
-			self.result_message = "Error on %s: %s" % (currentfile, e)
-			self.result = False
