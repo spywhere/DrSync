@@ -1,0 +1,10 @@
+Thanks for installing DrSync!
+
+DrSync is under review and will not working at this moment.
+
+How to use
+==========
+Open Command Palette then type `Synchronize Settings` and DrSync will do the rest for you. :)
+
+Synchronization settings can be adjusted inside DrSync's user preferences.
+* Make sure you adjust it before synchronize.
