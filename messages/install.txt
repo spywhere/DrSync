@@ -1,6 +1,7 @@
 Thanks for installing DrSync!
 
-DrSync is under review and will not working at this moment.
+Dropbox Status: Under review
+GoogleDrive Status: Ready!
 
 How to use
 ==========
