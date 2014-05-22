@@ -32,7 +32,7 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 		msg = message
 		if hasattr(thread, "message"):
 			msg = thread.message
-		return {"i": (i+1) % 3, "message": "%s %s" % (msg, "." * (i+1)), "delay": 300}
+		return {"i": (i+1) % 3, "message": "%s%s" % (msg, "." * (i+1)), "delay": 300}
 
 	def sync_fx(self, i, message, thread):
 		direction = ">" if self.upload else "<"

@@ -143,7 +143,8 @@ class DropboxSyncDownThread(threading.Thread):
 		try:
 			index = 0
 			for target, filepath in self.file_list:
-				currentfile = filepath
+				currentfile = os.path.basename(filepath)
+				self.filename = currentfile
 				self.percentage = int(index*100/len(self.file_list))
 				targetname = DropboxUtil.format_path(os.path.basename(target))
 				targetpath = os.path.join(target, filepath[len(targetname)+1:])

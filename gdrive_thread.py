@@ -45,6 +45,7 @@ class GDriveSyncUpThread(threading.Thread):
 	def run(self):
 		currentfile = ""
 		try:
+			self.filename = "Preparing"
 			self.client.delete_all_file(GDRIVE_SYNC_SCHEMA)
 			index = 0
 			for parent, filepath in self.file_list:
@@ -98,7 +99,6 @@ class GDriveSyncGatherThread(threading.Thread):
 								file_list.append([os.path.join(*file_path), item["id"]])
 				return file_list
 		except Exception as e:
-			print("Error: %s" % (e))
 			pass
 		return file_list
 
@@ -148,7 +148,21 @@ class GDriveSyncDownThread(threading.Thread):
 	def run(self):
 		currentfile = ""
 		try:
-
+			index = 0
+			for target, filepath, file_id in self.file_list:
+				currentfile = os.path.basename(filepath)
+				self.filename = currentfile
+				self.percentage = int(index*100/len(self.file_list))
+				targetname = os.path.basename(target)
+				targetpath = os.path.join(target, filepath[len(targetname)+1:])
+				targetdir = os.path.dirname(targetpath)
+				f = self.client.get_file_content(file_id)
+				if not os.path.exists(targetdir):
+					os.makedirs(targetdir)
+				out = open(targetpath, "wb")
+				out.write(f.read())
+				out.close()
+				index += 1
 			self.result = True
 		except Exception as e:
 			self.result_message = "Error on %s: %s" % (currentfile, e)
