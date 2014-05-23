@@ -1,0 +1,13 @@
+DrSync has been updated!
+
+Clound Service Support Status
+=============================
+Dropbox Status: Ready!
+GoogleDrive Status: Ready!
+
+What's New
+==========
+
+ - Default cloud service now changed to Dropbox
+ - Fix DrSync did not start up in Sublime Text 3
+ - Pre-fix certification finding problems that might occurred in package environment

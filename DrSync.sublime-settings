@@ -6,7 +6,7 @@
 	//   "dropbox": Dropbox
 	//   "drive": GoogleDrive
 	// otherwise may cause errors
-	"cloud_service": "drive",
+	"cloud_service": "dropbox",
 	// Synchronization settings
 	"synchronization_settings": {
 		// Synchronize installed packages (located in "Installed Packages" directory)

@@ -1,6 +1,8 @@
 Thanks for installing DrSync!
 
-Dropbox Status: Under review
+Clound Service Support Status
+=============================
+Dropbox Status: Ready!
 GoogleDrive Status: Ready!
 
 How to use
