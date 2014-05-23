@@ -8,7 +8,26 @@ class DropboxUtil():
 	WEB_HOST = "www.dropbox.com"
 	API_HOST = "api.dropbox.com"
 	API_CONTENT_HOST = "api-content.dropbox.com"
-	TRUSTED_CERT_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)),"trusted-certs.crt")
+
+	@staticmethod
+	def get_cert_file():
+		certs = sublime.find_resources("*.crt")
+		for cert in certs:
+			certparent = os.path.dirname(cert)
+			certname = os.path.basename(cert)
+			if certparent == "DrSync" and certname == "dropbox.crt":
+				return cert
+		parent = os.path.join(sublime.packages_path(), "User", "DrSync")
+		certs = sublime.find_resources("dropbox.certification")
+		for cert in certs:
+			if not os.path.exists(parent):
+				os.makedirs(parent)
+			certfile = os.path.join(parent, "dropbox.crt")
+			w = open(certfile, "w")
+			w.write(sublime.load_resource(cert))
+			w.close()
+			return certfile
+		return ""
 
 	@staticmethod
 	def build_path(target, params=None):

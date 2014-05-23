@@ -6,17 +6,18 @@ from ..urllib3 import *
 from .gdrive_util import *
 
 class GDriveConnection():
-	POOL_MANAGER = PoolManager(
-		num_pools=4,
-		maxsize=8,
-		block=False,
-		timeout=60.0,
-		cert_reqs=ssl.CERT_REQUIRED,
-		ca_certs=GDriveUtil.TRUSTED_CERT_FILE,
-		ssl_version=ssl.PROTOCOL_TLSv1,
-	)
 
 	def request(self, method, url, params=None, body=None, headers=None, raw_response=False, as_json=False):
+		pool_manager = PoolManager(
+			num_pools=4,
+			maxsize=8,
+			block=False,
+			timeout=60.0,
+			cert_reqs=ssl.CERT_REQUIRED,
+			ca_certs=GDriveUtil.get_cert_file(),
+			ssl_version=ssl.PROTOCOL_TLSv1,
+		)
+
 		params = params or {}
 		headers = headers or {}
 		headers["User-Agent"] = "DrSync/0.1"
@@ -43,7 +44,7 @@ class GDriveConnection():
 				raise ValueError("headers should not contain newlines (" + key + ": " + value + ")")
 
 		try:
-			response = self.POOL_MANAGER.urlopen(method=method, url=url, body=body, headers=headers, preload_content=False)
+			response = pool_manager.urlopen(method=method, url=url, body=body, headers=headers, preload_content=False)
 		except socket.error as e:
 			raise SocketError(url, e)
 		except exceptions.SSLError as e:
