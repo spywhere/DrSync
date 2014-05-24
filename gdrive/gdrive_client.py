@@ -61,10 +61,12 @@ class GDriveClient():
 			return folder_data["id"], parent_id
 
 	def split_path(self, path):
+		if path == os.path.sep:
+			return ["/"]
 		rest, tail = os.path.split(path)
-		if len(rest) <= 1:
-			return tail,
-		return self.split_path(rest) + (tail,)
+		if len(rest) == 0:
+			return [tail]
+		return self.split_path(rest) + [tail]
 
 	def put_file(self, full_path, file_obj):
 		self.delete_all_file(full_path)

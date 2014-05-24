@@ -44,13 +44,24 @@ class DropboxUtil():
 		return "https://" + host + DropboxUtil.build_path(target, params)
 
 	@staticmethod
+	def split_path(path):
+		if path == os.path.sep:
+			return ["/"]
+		rest, tail = os.path.split(path)
+		if len(rest) == 0:
+			return [tail]
+		return DropboxUtil.split_path(rest) + [tail]
+
+	@staticmethod
 	def format_path(path):
-		if not path:
-			return path
+		if path is None:
+			return ""
 
-		path = re.sub(r'/+', '/', path)
-
-		if path == '/':
-			return (u"" if isinstance(path, str) else "")
+		path = re.sub("/+", "/", path)
+		if path.startswith(os.path.sep):
+			path = path[1:]
+		if path == "/" or path == "":
+			return ""
 		else:
-			return '/' + path.strip('/')
+			split_path = DropboxUtil.split_path(path)
+			return "/" + os.path.join(*split_path)
