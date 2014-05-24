@@ -20,15 +20,16 @@ class GDriveAuth():
 			"client_secret": self.credential["client_secret"],
 			"refresh_token": refresh_token,
 		}
-		response = self.connection.post(GDriveUtil.TOKEN_URL, params=params)["data"]
-
-		if response.status == 200:
+		try:
+			response = self.connection.post(GDriveUtil.TOKEN_URL, params=params)["data"]
 			access_token = response["access_token"]
 			token_type = response["token_type"]
 			return access_token, token_type
-		else:
-			# Require authorization
-			return None
+		except ErrorResponse as e:
+			return None, None
+		except Exception as e:
+			raise e
+		return None, None
 
 	def get_authorize_url(self):
 		return GDriveUtil.build_url(GDriveUtil.AUTHORIZE_URL, {"access_type": "offline", "response_type": "code", "client_id": self.credential["client_id"], "redirect_uri": GDriveUtil.OOB_CALLBACK_URN, "scope": self.scopes_to_string(self.credential["scope"])})
@@ -46,4 +47,5 @@ class GDriveAuth():
 		response = self.connection.post(GDriveUtil.TOKEN_URL, params=params)["data"]
 		access_token = response["access_token"]
 		token_type = response["token_type"]
-		return access_token, token_type
+		refresh_token = response["refresh_token"]
+		return refresh_token, access_token, token_type

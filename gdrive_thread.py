@@ -6,6 +6,37 @@ from .gdrive import *
 GDRIVE_SYNC_SCHEMA = "DrSync.drsync-data"
 
 
+class GDrivePreAuthenticationThread(threading.Thread):
+	def __init__(self, credential, authenticator, refresh_token):
+		self.credential = credential
+		self.authenticator = authenticator
+		self.refresh_token = refresh_token
+		threading.Thread.__init__(self)
+
+	def run(self):
+		try:
+			self.require_code = True
+			if self.refresh_token is not None:
+				access_token, token_type = self.authenticator.refresh_access_token(self.refresh_token)
+				self.client = GDriveClient(self.credential, token_type, access_token)
+				self.message = "Connected. Gathering account informations"
+				account = self.client.account_info()
+				self.message = "Hello, %s! DrSync is checking previously synchronized data" % (account["name"])
+				self.sync_data = None
+				file_data = self.client.get_file(GDRIVE_SYNC_SCHEMA)
+				if file_data is not None:
+					fp = self.client.get_file_content(file_data["id"])
+					self.sync_data = sublime.decode_value(fp.read().decode("utf-8"))
+				self.require_code = False
+			self.result = True
+		except ErrorResponse as e:
+			self.result_message = "ErrorRes: %s" % (e)
+			self.result = False
+		except Exception as e:
+			self.result_message = "Error: %s" % (e)
+			self.result = False
+
+
 class GDriveAuthenticationThread(threading.Thread):
 	def __init__(self, credential, authenticator, authorize_code):
 		self.credential = credential
@@ -15,7 +46,7 @@ class GDriveAuthenticationThread(threading.Thread):
 
 	def run(self):
 		try:
-			access_token, token_type = self.authenticator.authorize(self.authorize_code)
+			self.refresh_token, access_token, token_type = self.authenticator.authorize(self.authorize_code)
 			self.client = GDriveClient(self.credential, token_type, access_token)
 			self.message = "Connected. Gathering account informations"
 			account = self.client.account_info()

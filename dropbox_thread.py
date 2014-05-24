@@ -6,6 +6,16 @@ from .dropbox import *
 DROPBOX_SYNC_SCHEMA = "/DrSync.drsync-data"
 
 
+class DropboxPreAuthenticationThread(threading.Thread):
+	def __init__(self, authenticator, refresh_token):
+		self.authenticator = authenticator
+		threading.Thread.__init__(self)
+
+	def run(self):
+		self.result = True
+		self.require_code = True
+
+
 class DropboxAuthenticationThread(threading.Thread):
 	def __init__(self, authenticator, authorize_code):
 		self.authenticator = authenticator
@@ -15,6 +25,7 @@ class DropboxAuthenticationThread(threading.Thread):
 	def run(self):
 		try:
 			access_token, user_id = self.authenticator.authorize(self.authorize_code)
+			self.refresh_token = None
 			self.client = DropboxClient(access_token)
 			self.message = "Connected. Gathering account informations"
 			account = self.client.account_info()

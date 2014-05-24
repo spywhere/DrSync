@@ -11,6 +11,7 @@ from .drsync_key import *
 from .thread_progress import *
 
 
+SETTINGSBASE = "DrSync.sublime-settings"
 USER_FOLDER = "User"
 DRSYNC_SETTINGS = None
 
@@ -18,12 +19,16 @@ DRSYNC_SETTINGS = None
 def get_settings(key, default=None):
 	return DRSYNC_SETTINGS.get(key, default)
 
+def set_settings(key, value):
+	DRSYNC_SETTINGS.set(key, value)
+	sublime.save_settings(SETTINGSBASE)
+
 def cloud_is(cloud):
 	return get_settings("cloud_service") == cloud
 
 def plugin_loaded():
 	global DRSYNC_SETTINGS
-	DRSYNC_SETTINGS = sublime.load_settings("DrSync.sublime-settings")
+	DRSYNC_SETTINGS = sublime.load_settings(SETTINGSBASE)
 	print("DrSync ready")
 
 
@@ -51,14 +56,34 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 
 	def run(self):
 		credential = DrSyncCredential.get_credential(self, get_settings("cloud_service"))
+		refresh_token = get_settings("refresh_token")
+
 		if cloud_is("drive"):
 			self.auth = GDriveAuth(credential)
+			if "drive" not in refresh_token:
+				refresh_token["drive"] = None
+			thread = GDrivePreAuthenticationThread(DrSyncCredential.get_credential(self, "drive"), self.auth, refresh_token["drive"])
 		elif cloud_is("dropbox"):
 			self.auth = DropboxAuth(credential["app_key"], credential["app_secret"])
+			if "dropbox" not in refresh_token:
+				refresh_token["dropbox"] = None
+			thread = DropboxPreAuthenticationThread(self.auth, refresh_token["dropbox"])
 		else:
-			sublime.error_message("Invalid Clound Service: " + get_settings("cloud_service"))
 			return
-		self.window.show_input_panel("Authorize Code:", "Please allow DrSync and get code from: "+self.auth.get_authorize_url(), self.on_code_entered, None, None)
+		thread.start()
+		if cloud_is("drive"):
+			ThreadProgress(thread, "Connecting to GoogleDrive", self.on_pre_authorized, self.on_pre_authorized, self.connect_fx)
+		elif cloud_is("dropbox"):
+			ThreadProgress(thread, "Connecting to Dropbox", self.on_pre_authorized, self.on_pre_authorized, self.connect_fx)
+
+	def on_pre_authorized(self, thread):
+		if thread.result:
+			if thread.require_code:
+				self.window.show_input_panel("Authorize Code:", "Please allow DrSync and get code from: "+self.auth.get_authorize_url(), self.on_code_entered, None, None)
+			else:
+				self.on_authorized(thread)
+		else:
+			sublime.error_message(thread.result_message)
 
 	def on_code_entered(self, code):
 		if cloud_is("drive"):
@@ -69,9 +94,9 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 			return
 		thread.start()
 		if cloud_is("drive"):
-			ThreadProgress(thread, "Connecting to GoogleDrive", self.on_authorized, self.on_authorized, self.connect_fx)
+			ThreadProgress(thread, "Authenticating into GoogleDrive", self.on_authorized, self.on_authorized, self.connect_fx)
 		elif cloud_is("dropbox"):
-			ThreadProgress(thread, "Connecting to Dropbox", self.on_authorized, self.on_authorized, self.connect_fx)
+			ThreadProgress(thread, "Authenticating into Dropbox", self.on_authorized, self.on_authorized, self.connect_fx)
 
 	def get_timestamp(self):
 		months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -87,6 +112,13 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 
 	def on_authorized(self, thread):
 		if thread.result:
+			if thread.refresh_token is not None:
+				refresh_token = get_settings("refresh_token") or {}
+				if cloud_is("drive"):
+					refresh_token["drive"] = thread.refresh_token
+				elif cloud_is("dropbox"):
+					refresh_token["dropbox"] = thread.refresh_token
+				set_settings("refresh_token", refresh_token)
 			self.client = thread.client
 			self.sync_data = thread.sync_data
 			self.paths = self.get_paths()
