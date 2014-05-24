@@ -25,13 +25,15 @@ Open Command Palette then type `Synchronize Settings`, follow the instructions a
  * Paste it inside that input panel and press `Enter/Return`
  * DrSync will start synchronize your settings
  * If existing synchronization is found, you can select to `Sync To` or `Sync From`
- 
+
 **Note!** While DrSync is running, do not close the Sublime Text until it finished. Otherwise, you will need to synchronize settings all over again.
 
 ### Something you may want to know
 Always adjust your synchronization preferences before synchronize to cloud service but it is not neccessary when synchronize from cloud service. Since, DrSync keep all synchronization preferences in cloud service too.
 
 While DrSync is synchronize your settings from cloud service, do not try to edit or move any file that DrSync might synchronize such as preferences files or plugins. If any interruption occurred while synchronizing, DrSync will stop and you will need to start over again.
+
+Please report any issue you found, this helps DrSync development get better and less bugs.
 
 ### License
 	::DrSync::

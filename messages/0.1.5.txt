@@ -1,0 +1,12 @@
+DrSync has been updated!
+
+Clound Service Support Status
+=============================
+Dropbox Status: Ready!
+GoogleDrive Status: Ready!
+
+What's New
+==========
+
+ - GoogleDrive now using refresh_token so you don't have to reallow DrSync again (for a short period of time)
+ - Fix Dropbox did not work due to pre-fix certification
