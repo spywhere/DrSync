@@ -13,7 +13,7 @@ class DropboxConnection():
 			block=False,
 			timeout=60.0,
 			cert_reqs=ssl.CERT_REQUIRED,
-			ca_certs=GDriveUtil.get_cert_file(),
+			ca_certs=DropboxUtil.get_cert_file(),
 			ssl_version=ssl.PROTOCOL_TLSv1,
 		)
 

@@ -7,6 +7,7 @@
 	//   "drive": GoogleDrive
 	// otherwise may cause errors
 	"cloud_service": "dropbox",
+
 	// Synchronization settings
 	"synchronization_settings": {
 		// Synchronize installed packages (located in "Installed Packages" directory)
@@ -26,8 +27,14 @@
 		// - Default (Linux).sublime-keymap
 		"sublime_preferences": true
 	},
+
 	// RegEx patterns of folder exclusion
 	"exclude_folder_patterns": [],
+
 	// RegEx patterns of file exclusion
-	"exclude_file_patterns": ["\\.DS_Store"]
+	"exclude_file_patterns": ["\\.DS_Store"],
+
+	// Refresh token from cloud service.
+	// Should be read-only
+	"refresh_token": {}
 }

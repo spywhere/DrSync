@@ -6,7 +6,6 @@ import urllib
 class GDriveUtil():
 	AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/auth"
 	TOKEN_URL = "https://accounts.google.com/o/oauth2/token"
-	REVOKE_URL = "https://accounts.google.com/o/oauth2/revoke"
 	API_URL = "https://www.googleapis.com/drive/v2"
 	OOB_CALLBACK_URN = "urn:ietf:wg:oauth:2.0:oob"
 

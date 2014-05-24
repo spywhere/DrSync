@@ -13,6 +13,23 @@ class GDriveAuth():
 		else:
 			return " ".join(scopes)
 
+	def refresh_access_token(self, refresh_token):
+		params = {
+			"grant_type": "refresh_token",
+			"client_id": self.credential["client_id"],
+			"client_secret": self.credential["client_secret"],
+			"refresh_token": refresh_token,
+		}
+		response = self.connection.post(GDriveUtil.TOKEN_URL, params=params)["data"]
+
+		if response.status == 200:
+			access_token = response["access_token"]
+			token_type = response["token_type"]
+			return access_token, token_type
+		else:
+			# Require authorization
+			return None
+
 	def get_authorize_url(self):
 		return GDriveUtil.build_url(GDriveUtil.AUTHORIZE_URL, {"access_type": "offline", "response_type": "code", "client_id": self.credential["client_id"], "redirect_uri": GDriveUtil.OOB_CALLBACK_URN, "scope": self.scopes_to_string(self.credential["scope"])})
 
