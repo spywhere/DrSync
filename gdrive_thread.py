@@ -30,11 +30,12 @@ class GDrivePreAuthenticationThread(threading.Thread):
 				self.require_code = False
 			self.result = True
 		except ErrorResponse as e:
-			self.result_message = "ErrorRes: %s" % (e)
+			self.result_message = "GDrive ErrorRes [P]: %s" % (e)
 			self.result = False
 		except Exception as e:
-			self.result_message = "Error: %s" % (e)
+			self.result_message = "GDrive Error [P]: %s" % (e)
 			self.result = False
+			self.exception = e
 
 
 class GDriveAuthenticationThread(threading.Thread):
@@ -58,11 +59,12 @@ class GDriveAuthenticationThread(threading.Thread):
 				self.sync_data = sublime.decode_value(fp.read().decode("utf-8"))
 			self.result = True
 		except ErrorResponse as e:
-			self.result_message = "ErrorRes: %s" % (e)
+			self.result_message = "GDrive ErrorRes [A]: %s" % (e)
 			self.result = False
 		except Exception as e:
-			self.result_message = "Error: %s" % (e)
+			self.result_message = "GDrive Error [A]: %s" % (e)
 			self.result = False
+			self.exception = e
 
 
 class GDriveSyncUpThread(threading.Thread):
@@ -97,8 +99,9 @@ class GDriveSyncUpThread(threading.Thread):
 
 			self.result = True
 		except Exception as e:
-			self.result_message = "Error on %s: %s" % (currentfile, e)
+			self.result_message = "GDrive Error [U] on %s: %s" % (currentfile, e)
 			self.result = False
+			self.exception = e
 
 
 class GDriveSyncGatherThread(threading.Thread):
@@ -164,8 +167,9 @@ class GDriveSyncGatherThread(threading.Thread):
 						self.file_list.append([self.paths["packages_user"], filepath, file_data["id"]])
 			self.result = True
 		except Exception as e:
-			self.result_message = "Error gathering: %s" % (e)
+			self.result_message = "GDrive Error [G] gathering: %s" % (e)
 			self.result = False
+			self.exception = e
 
 
 class GDriveSyncDownThread(threading.Thread):
@@ -196,5 +200,6 @@ class GDriveSyncDownThread(threading.Thread):
 				index += 1
 			self.result = True
 		except Exception as e:
-			self.result_message = "Error on %s: %s" % (currentfile, e)
+			self.result_message = "GDrive Error [D] on %s: %s" % (currentfile, e)
 			self.result = False
+			self.exception = e

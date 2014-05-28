@@ -38,11 +38,12 @@ class DropboxAuthenticationThread(threading.Thread):
 					self.sync_data = sublime.decode_value(fp.read().decode("utf-8"))
 			self.result = True
 		except ErrorResponse as e:
-			self.result_message = "ErrorRes: %s" % (e)
+			self.result_message = "Dropbox [A] ErrorRes: %s" % (e)
 			self.result = False
 		except Exception as e:
-			self.result_message = "Error: %s" % (e)
+			self.result_message = "Dropbox [A] Error: %s" % (e)
 			self.result = False
+			self.exception = e
 
 
 class DropboxSyncUpThread(threading.Thread):
@@ -75,8 +76,9 @@ class DropboxSyncUpThread(threading.Thread):
 
 			self.result = True
 		except Exception as e:
-			self.result_message = "Error on %s: %s" % (currentfile, e)
+			self.result_message = "Dropbox Error [U] on %s: %s" % (currentfile, e)
 			self.result = False
+			self.exception = e
 
 
 class DropboxSyncGatherThread(threading.Thread):
@@ -137,8 +139,9 @@ class DropboxSyncGatherThread(threading.Thread):
 						self.file_list.append([self.paths["packages_user"], DropboxUtil.format_path(filepath)])
 			self.result = True
 		except Exception as e:
-			self.result_message = "Error gathering: %s" % (e)
+			self.result_message = "Dropbox Error [G] gathering: %s" % (e)
 			self.result = False
+			self.exception = e
 
 
 class DropboxSyncDownThread(threading.Thread):
@@ -169,5 +172,6 @@ class DropboxSyncDownThread(threading.Thread):
 				index += 1
 			self.result = True
 		except Exception as e:
-			self.result_message = "Error on %s: %s" % (currentfile, e)
+			self.result_message = "Dropbox Error [D] on %s: %s" % (currentfile, e)
 			self.result = False
+			self.exception = e

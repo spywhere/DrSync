@@ -84,6 +84,7 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 				self.on_authorized(thread)
 		else:
 			sublime.error_message(thread.result_message)
+			raise thread.e
 
 	def on_code_entered(self, code):
 		if cloud_is("drive"):
@@ -132,6 +133,7 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 				self.window.show_quick_panel(items, self.on_sync_selection)
 		else:
 			sublime.error_message(thread.result_message)
+			raise thread.e
 
 	def on_sync_selection(self, index):
 		if index < 0:
@@ -188,6 +190,7 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 			ThreadProgress(sthread, "", self.on_sync_done, self.on_sync_done, self.sync_fx)
 		else:
 			sublime.error_message(thread.result_message)
+			raise thread.e
 
 	def sync_to(self):
 		file_list = []
@@ -229,3 +232,4 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 			sublime.status_message("Data has been synchronized successfully")
 		else:
 			sublime.error_message(thread.result_message)
+			raise thread.e

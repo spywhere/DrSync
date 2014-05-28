@@ -2,7 +2,7 @@
 
 ![DrSync Logo](https://raw.githubusercontent.com/spywhere/spywhere.github.com/master/images/drsync/DrSyncMini.png)
 
-A Sublime Text 3 Plugin for settings synchronization on Dropbox and GoogleDrive
+A Sublime Text 3 Plugin for settings synchronization on cloud services
 
 ### Cloud Service Support Status
 
