@@ -11,6 +11,7 @@ from .drsync_key import *
 from .thread_progress import *
 
 
+VERSION = "0.1.8"
 SETTINGSBASE = "DrSync.sublime-settings"
 USER_FOLDER = "User"
 DRSYNC_SETTINGS = None
@@ -29,7 +30,7 @@ def cloud_is(cloud):
 def plugin_loaded():
 	global DRSYNC_SETTINGS
 	DRSYNC_SETTINGS = sublime.load_settings(SETTINGSBASE)
-	print("DrSync ready")
+	print("DrSync v%s ready" % (VERSION))
 
 
 class DrsyncCommand(sublime_plugin.WindowCommand):
@@ -84,7 +85,7 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 				self.on_authorized(thread)
 		else:
 			sublime.error_message(thread.result_message)
-			raise thread.e
+			raise thread.exception
 
 	def on_code_entered(self, code):
 		if cloud_is("drive"):
@@ -133,7 +134,7 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 				self.window.show_quick_panel(items, self.on_sync_selection)
 		else:
 			sublime.error_message(thread.result_message)
-			raise thread.e
+			raise thread.exception
 
 	def on_sync_selection(self, index):
 		if index < 0:
@@ -190,7 +191,7 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 			ThreadProgress(sthread, "", self.on_sync_done, self.on_sync_done, self.sync_fx)
 		else:
 			sublime.error_message(thread.result_message)
-			raise thread.e
+			raise thread.exception
 
 	def sync_to(self):
 		file_list = []
@@ -232,4 +233,4 @@ class DrsyncCommand(sublime_plugin.WindowCommand):
 			sublime.status_message("Data has been synchronized successfully")
 		else:
 			sublime.error_message(thread.result_message)
-			raise thread.e
+			raise thread.exception

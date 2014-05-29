@@ -45,19 +45,18 @@ class DropboxUtil():
 
 	@staticmethod
 	def split_path(path):
-		if path == os.path.sep:
-			return ["/"]
-		rest, tail = os.path.split(path)
-		if len(rest) == 0:
-			return [tail]
-		return DropboxUtil.split_path(rest) + [tail]
+		sep = os.path.sep
+		if path.startswith(sep):
+			return ["/"] + DropboxUtil.split_path(path[1:])
+		else:
+			return path.split(sep)
 
 	@staticmethod
 	def format_path(path):
 		if path is None:
 			return ""
-
-		path = re.sub("/+", "/", path)
+		while os.path.sep * 2 in path:
+			path = path.replace(os.path.sep * 2, os.path.sep)
 		if path.startswith(os.path.sep):
 			path = path[1:]
 		if path == "/" or path == "":
