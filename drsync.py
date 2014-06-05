@@ -11,7 +11,7 @@ from .drsync_key import *
 from .thread_progress import *
 
 
-VERSION = "0.1.8"
+VERSION = "0.1.9"
 SETTINGSBASE = "DrSync.sublime-settings"
 USER_FOLDER = "User"
 DRSYNC_SETTINGS = None
