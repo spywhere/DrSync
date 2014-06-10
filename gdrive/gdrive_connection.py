@@ -1,22 +1,30 @@
 import sublime
 import json
 import socket
-import ssl
 from ..urllib3 import *
 from .gdrive_util import *
 
 class GDriveConnection():
 
 	def request(self, method, url, params=None, body=None, headers=None, raw_response=False, as_json=False):
-		pool_manager = PoolManager(
-			num_pools=4,
-			maxsize=8,
-			block=False,
-			timeout=60.0,
-			cert_reqs=ssl.CERT_REQUIRED,
-			ca_certs=GDriveUtil.get_cert_file(),
-			ssl_version=ssl.PROTOCOL_TLSv1,
-		)
+		try:
+			import ssl
+			pool_manager = PoolManager(
+				num_pools=4,
+				maxsize=8,
+				block=False,
+				timeout=60.0,
+				cert_reqs=ssl.CERT_REQUIRED,
+				ca_certs=GDriveUtil.get_cert_file(),
+				ssl_version=ssl.PROTOCOL_TLSv1,
+			)
+		except (ImportError):
+			pool_manager = PoolManager(
+				num_pools=4,
+				maxsize=8,
+				block=False,
+				timeout=60.0,
+			)
 
 		params = params or {}
 		headers = headers or {}
