@@ -4,9 +4,19 @@
 
 A Sublime Text 3 Plugin for settings synchronization on cloud services
 
+### !!!Must Read!!!
+
+TL;DR: Due to https policy on Package Control, this package is not recommended to be used anymore.
+
+Though this package still working. I don't recommended to use it anymore since I kind of discontinue this project due to https policy on Package Control and also I rarely use it myself.
+
+You must install it yourself if you want to use it since this package has been removed from Package Control since December 2014.
+
+If anyone want to work on this project, just let me know.
+
 ### Cloud Service Support Status
 
-Dropbox Status: Working<br />
+Dropbox Status: Not available anymore (removed)<br />
 GoogleDrive Status: Working
 
 Existing user? No problem, you can use Dropbox as a cloud service right away!
